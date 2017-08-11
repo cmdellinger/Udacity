@@ -52,10 +52,10 @@ You may wish to use IPython notebook, in which case you can share both the code 
 Brainstorm some questions you could answer using the data set you chose, then start answering those questions. Here are some ideas to get you started:
 
 Titanic Data
-What factors made people more likely to survive?
+    What factors made people more likely to survive?
 Baseball Data
-What is the relationship between different performance metrics? Do any have a strong negative or positive relationship?
-What are the characteristics of baseball players with the highest salaries?
+    What is the relationship between different performance metrics? Do any have a strong negative or positive relationship?
+    What are the characteristics of baseball players with the highest salaries?
 Make sure you use NumPy and Pandas where they are appropriate!
 
 # Step Four - Share Your Findings
