@@ -5,14 +5,15 @@ Lesson 3
 
 ### What to Do First?
 Notes:
-
+Get the big picture of the data.
+Start by loading data set.
 ***
 
 ### Pseudo-Facebook User Data
 Notes:
 
 ```{r Pseudo-Facebook User Data}
-
+pf <- read.csv("pseudo_facebook.tsv", sep = '\t')
 ```
 
 ***
@@ -21,20 +22,24 @@ Notes:
 Notes:
 
 ```{r Histogram of Users\' Birthdays}
-install.packages('ggplot2')
+# install.packages('ggplot2')
 library(ggplot2)
+
+names(pf)
+qplot(x = dob_day, data = pf) +
+  scale_x_continuous(breaks=1:31)
 ```
 
 ***
 
 #### What are some things that you notice about this histogram?
 Response:
-
+The first day of the month is much higher. Not all months have 31 days, so that bin should be lower.
 ***
 
 ### Moira's Investigation
 Notes:
-
+Perception of audience on social media matches up with who is actually reading.
 ***
 
 ### Estimating Your Audience Size
@@ -55,13 +60,16 @@ Response:
 
 ### Perceived Audience Size
 Notes:
-
+people underestimated their audience by about 1/4th.
 ***
 ### Faceting
 Notes:
 
 ```{r Faceting}
-
+ggplot(data = pf, aes(x = dob_day)) +
+  geom_histogram(binwidth = 1) +
+  scale_x_continuous(breaks = 1:31) +
+  facet_wrap(~dob_month)
 ```
 
 #### Let’s take another look at our plot. What stands out to you here?
@@ -87,19 +95,23 @@ Notes:
 #### What code would you enter to create a histogram of friend counts?
 
 ```{r Friend Count}
-
+#str(pf)
+qplot(x = friend_count, data = pf)
 ```
 
 #### How is this plot similar to Moira's first plot?
 Response:
-
+Most of the conuts are squished on the left side, so most of the analysis is conserned with data that is not easily visible sue to scaling for the tail.
 ***
 
 ### Limiting the Axes
 Notes:
 
 ```{r Limiting the Axes}
+qplot(x = friend_count, data = pf, xlim = c(0, 1000))
 
+qplot(x = friend_count, data = pf) +
+  scale_x_continuous(limits = c(0, 1000))
 ```
 
 ### Exploring with Bin Width
@@ -109,6 +121,10 @@ Notes:
 
 ### Adjusting the Bin Width
 Notes:
+```{r}
+qplot(x = friend_count, data = pf, binwidth = 25) +
+  scale_x_continuous(limits = c(0, 1000), breaks = seq(0, 1000, 50))
+```
 
 ### Faceting Friend Count
 ```{r Faceting Friend Count}
@@ -116,7 +132,8 @@ Notes:
 # Add it to the code below.
 qplot(x = friend_count, data = pf, binwidth = 10) +
   scale_x_continuous(limits = c(0, 1000),
-                     breaks = seq(0, 1000, 50))
+                     breaks = seq(0, 1000, 50)) +
+  facet_grid(gender ~.)
 ```
 
 ***
@@ -125,7 +142,10 @@ qplot(x = friend_count, data = pf, binwidth = 10) +
 Notes:
 
 ```{r Omitting NA Values}
-
+qplot(x = friend_count, data = subset(pf, !is.na(gender)), binwidth = 10) +
+  scale_x_continuous(limits = c(0, 1000),
+                     breaks = seq(0, 1000, 50)) +
+  facet_grid(gender ~.)
 ```
 
 ***
@@ -134,17 +154,18 @@ Notes:
 Notes:
 
 ```{r Statistics \'by\' Gender}
-
+table(pf$gender)
+by(pf$friend_count, pf$gender, summary)
 ```
 
 #### Who on average has more friends: men or women?
-Response:
+Response: female
 
 #### What's the difference between the median friend count for women and men?
-Response:
+Response: 22
 
 #### Why would the median be a better measure than the mean?
-Response:
+Response: there is are huge maximums that might be skewing the mean
 
 ***
 
@@ -152,7 +173,8 @@ Response:
 Notes:
 
 ```{r Tenure}
-
+qplot(x = tenure, data = pf, binwidth = 30,
+      color = I('black'), fill = I('#099DD9'))
 ```
 
 ***
@@ -160,7 +182,9 @@ Notes:
 #### How would you create a histogram of tenure by year?
 
 ```{r Tenure Histogram by Year}
-
+qplot(x = tenure/365, data = pf, binwidth = 0.25,
+      color = I('black'), fill = I('#F79420')) +
+  scale_x_continuous(breaks = seq(1,7,1), limits=c(1,7))
 ```
 
 ***
@@ -169,7 +193,11 @@ Notes:
 Notes:
 
 ```{r Labeling Plots}
-
+qplot(x = tenure/365, data = pf, binwidth = 0.25,
+      xlab = 'Number of years using Facebook',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I('#F79420')) +
+  scale_x_continuous(breaks = seq(1,7,1), limits=c(1,7))
 ```
 
 ***
@@ -178,34 +206,78 @@ Notes:
 Notes:
 
 ```{r User Ages}
+qplot(x = age, data = pf, binwidth = 5,
+      xlab = 'Age of Facebook user',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I('#F79420')) #+
+  #scale_x_continuous(breaks = seq(0,60,5), limits=c(0,65))
 
+qplot(x = age, data = pf, binwidth = 5,
+      xlab = 'Age of Facebook user',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I('#F79420')) +
+  scale_x_continuous(breaks = seq(0,60,5), limits=c(0,65))
+
+qplot(x = age, data = pf, binwidth = 1,
+      xlab = 'Age of Facebook user',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I('#F79420')) +
+  scale_x_continuous(breaks = seq(12,30,1), limits=c(12,35))
 ```
-
+```{r age example from video}
+# example from video
+qplot(x = age, data = pf, binwidth = 1,
+      xlab = 'Age of Facebook user',
+      ylab = 'Number of users in sample',
+      color = I('black'), fill = I('#5760AB')) +
+  scale_x_continuous(breaks = seq(0,113,5))
+```
 #### What do you notice?
 Response:
-
+Largest amount of users are in their early 20s. No one is registered below the minimum age of 13 required to register. There are some extreme ages (>100 years old) that don't seem real.
 ***
 
 ### The Spread of Memes
 Notes:
-
+Individual to individual infomraiton transfer. Memes replicate through the social network. They tend to recur over time.
 ***
 
 ### Lada's Money Bag Meme
 Notes:
-
+The plot makes it look likes it disappears. When zooming in using a log scale, you can see that the meme persists in low numbers after the huge drop off.
 ***
 
 ### Transforming Data
 Notes:
+```{r Transforming Data}
+#qplot(x = friend_count, data = pf)
 
+
+summary(pf$friend_count)
+summary(log10(pf$friend_count + 1))
+summary(sqrt(pf$friend_count))
+
+library(gridExtra)
+# define individual plots
+p1 <- qplot(x = friend_count, data = pf)
+p2 <- qplot(x = log10(friend_count+1), data = pf)
+p3 <- qplot(x = sqrt(friend_count), data = pf)
+# arrange plots in grid
+grid.arrange(p1, p2, p3, ncol=1)
+```
+```{r Transforming Data - Alternate Answer}
+p1 <- ggplot(aes(x = friend_count), data = pf) + geom_histogram()
+p2 <- p1 + scale_x_log10()
+p3 <- p1 + scale_x_sqrt()
+grid.arrange(p1, p2, p3, ncol=1)
+```
 ***
 
 ### Add a Scaling Layer
 Notes:
-
+adding a layer converts the scale of the axis. For instance, graphing the histogram for log10(x) graphs the log values vs applying a layer which uses units 1...1000, etc.
 ```{r Add a Scaling Layer}
-
+# see above scaling layers
 ```
 
 ***
@@ -214,32 +286,84 @@ Notes:
 ### Frequency Polygons
 
 ```{r Frequency Polygons}
+qplot(x = friend_count, data = subset(pf, !is.na(gender)),
+      binwidth = 10) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50)) + 
+  facet_wrap(~gender)
+# use overlapping frequency polygon
+qplot(x = friend_count, data = subset(pf, !is.na(gender)),
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50))
 
+qplot(x = friend_count, y = ..count../sum(..count..),
+      data = subset(pf, !is.na(gender)),
+      xlab = 'Friend Count',
+      ylab = 'Proportion of Users with that friend count',
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(0, 1000), breaks = seq(0, 1000, 50))
 ```
+```{r}
+qplot(x = friend_count, y = ..count../sum(..count..),
+      data = subset(pf, !is.na(gender)),
+      xlab = 'Friend Count',
+      ylab = 'Proportion of Users with that friend count',
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+  scale_x_continuous(lim = c(500, 1000), breaks = seq(0, 1000, 50))
 
+qplot(x = friend_count, y = ..count../sum(..count..),
+      data = subset(pf, !is.na(gender)),
+      xlab = 'Friend Count',
+      ylab = 'Proportion of Users with that friend count',
+      binwidth = 10, geom = 'freqpoly', color = gender) +
+      scale_x_log10(limits = c(500, 1000))
+```
 ***
 
 ### Likes on the Web
 Notes:
 
 ```{r Likes on the Web}
-
+# names(pf)
+qplot(x = www_likes, data = subset(pf, !is.na(gender)),
+      geom = 'freqpoly', color = gender) +
+  scale_x_continuous() +
+  scale_x_log10()
 ```
-
+```{r}
+by(pf$www_likes, pf$gender, sum)
+```
 
 ***
 
 ### Box Plots
 Notes:
+x <- categorical data
+y <- continuous data
 
 ```{r Box Plots}
-
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+  scale_y_log10()
 ```
 
 #### Adjust the code to focus on users who have friend counts between 0 and 1000.
 
 ```{r}
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') +
+  scale_y_continuous(limits = c(0,1000)) +
+  scale_y_log10()
 
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot', ylim = c(0,1000))
+
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+  coord_cartesian(ylim = c(0,1000))
 ```
 
 ***
@@ -248,30 +372,52 @@ Notes:
 Notes:
 
 ```{r Box Plots, Quartiles, and Friendships}
+qplot(x = gender, y = friend_count,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+  coord_cartesian(ylim = c(0,250))
 
+by(pf$friend_count, pf$gender, summary)
 ```
 
 #### On average, who initiated more friendships in our sample: men or women?
 Response:
+```{r}
+qplot(x = gender, y = friendships_initiated,
+      data = subset(pf, !is.na(gender)),
+      geom = 'boxplot') + 
+  coord_cartesian(ylim = c(0,150))
+
+by(pf$friendships_initiated, pf$gender, summary)
+```
 #### Write about some ways that you can verify your answer.
 Response:
 ```{r Friend Requests by Gender}
-
+by(pf$friendships_initiated, pf$gender, summary)
 ```
 
 Response:
-
+You can look at the numeric summary to double check the boxplot.
 ***
 
 ### Getting Logical
 Notes:
 
 ```{r Getting Logical}
+summary(pf$mobile_likes)
 
+summary(pf$mobile_likes > 0)
+
+pf$mobile_check_in <- NA
+pf$mobile_check_in <- ifelse(pf$mobile_likes > 0,1,0)
+pf$mobile_check_in <- factor(pf$mobile_check_in)
+summary(pf$mobile_check_in)
 ```
 
 Response:
-
+```{r}
+sum(pf$mobile_check_in == 1)/length(pf$mobile_check_in == 1)
+```
 ***
 
 ### Analyzing One Variable
