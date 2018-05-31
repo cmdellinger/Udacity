@@ -1,0 +1,219 @@
+---
+title: "Two Variable Exercises"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# In this problem set, you'll continue
+# to explore the diamonds data set.
+
+```{r load data and ggplot library}
+data(diamonds)
+library(ggplot2)
+```
+# Your first task is to create a
+# scatterplot of price vs x.
+# using the ggplot syntax.
+```{r}
+with(diamonds, summary(price))
+with(diamonds, summary(x))
+```
+```{r}
+ggplot(aes(x = x, y = price),
+       data = diamonds) +
+  geom_point()
+```
+
+```{r Correlations}
+# What is the correlation between price and x?
+with(diamonds, cor.test(price, x))
+# What is the correlation between price and y?
+with(diamonds, cor.test(price, y))
+# What is the correlation between price and z?
+with(diamonds, cor.test(price, z))
+```
+
+```{r price vs. depth}
+# Create a simple scatter plot of price vs depth.
+ggplot(aes(x = depth, y = price), data = diamonds) +
+  geom_point()
+```
+
+```{r Adjustments - price vs. depth}
+# Change the code to make the transparency of the
+# points to be 1/100 of what they are now and mark
+# the x-axis every 2 units. See the instructor notes
+# for two hints.
+ggplot(aes(x = depth, y = price), data = diamonds) +
+  geom_point(alpha = 1/100) +
+  scale_x_continuous(breaks=seq(0,80,2))
+```
+
+```{r Typical Depth Range}
+# Based on the scatterplot of depth vs. price, most of the diamonds are between what values of depth?
+with(diamonds, quantile(depth, 0.1))
+with(diamonds, quantile(depth, 0.9))
+# 60 to 64
+```
+
+```{r Correlation - price and depth}
+# What's the correlation of depth vs. price?
+with(diamonds, cor.test(price, depth))
+# Based on the correlation coefficient would you use depth to predict the price of a diamond?
+No, the correlation coefficient is too small to show that they trend together.
+```
+
+```{r price vs. carat}
+# Create a scatterplot of price vs carat
+# and omit the top 1% of price and carat
+# values.
+ggplot(aes(x = carat, y = price),
+       data = subset(diamonds, carat < quantile(carat, .99) &
+                       price < quantile(price, 0.99))) +
+  geom_point(alpha = 1/100)
+```
+
+```{r price vs. volume}
+# Create a scatterplot of price vs. volume (x * y * z).
+# This is a very rough approximation for a diamond's volume.
+ggplot(aes(x = x*y*z, y = price),
+       data = diamonds) +
+  geom_point() +
+  xlim(c(0,1000))
+# Create a new variable for volume in the diamonds data frame.
+# This will be useful in a later exercise.
+diamonds$volume <- with(diamonds, x*y*z)
+# Don't make any adjustments to the plot just yet.
+```
+Did you notice some outliers? Some volumes are 0! There's an expensive diamond with a volume near 4000, and a cheaper diamond with a volume near 900.
+
+You can find out how many diamonds have 0 volume by using `count(diamonds$volume == 0)`. The `count()` function comes with the plyr package.
+
+Note: If you ran the `count` function from plyr, you need to run this command in R to unload the plyr package.
+```detach("package:plyr", unload=TRUE)```
+The plyr package will conflict with the dplyr package in later exercises.
+
+Depending on your investigation, it may or may not be important for you to understand how outliers, like these, came to be in your data.
+
+```{r Correlations on Subsets}
+# What's the correlation of price and volume?
+# Exclude diamonds that have a volume of 0 or that are greater than or equal to 800.
+with(subset(diamonds, (volume > 0 & volume <= 800)),
+     cor.test(price, volume))
+```
+```{r Adjustments - price vs. volume}
+# Subset the data to exclude diamonds with a volume
+# greater than or equal to 800. Also, exclude diamonds
+# with a volume of 0. Adjust the transparency of the
+# points and add a linear model to the plot. (See the
+# Instructor Notes or look up the documentation of
+# geom_smooth() for more details about smoothers.)
+p1 <- ggplot(aes(x = volume, y = price),
+       data = subset(diamonds, (volume > 0 & volume <= 800))) +
+  geom_point(alpha = 1/20)
+p1 + geom_smooth(method = "glm", formula = y ~ poly(x,2))
+# Do you think this would be a useful model to estimate
+# the price of diamonds? Why or why not?
+
+# this line isn't particularly useful. the outliers pull
+# the regression line out, so it doesn't arc up as fast 
+# as the bulk of the data. There are also clusters at
+# certain breakpoints that a simple curve doesn't capture.
+```
+
+```{r Mean Price by Clarity}
+# Use the function dplyr package
+# to create a new data frame containing
+# info on diamonds by clarity.
+
+# Name the data frame diamondsByClarity
+
+# The data frame should contain the following
+# variables in this order.
+
+#       (1) mean_price
+#       (2) median_price
+#       (3) min_price
+#       (4) max_price
+#       (5) n
+
+# where n is the number of diamonds in each
+# level of clarity.
+
+data(diamonds)
+library(dplyr)
+
+diamondsByClarity <- diamonds %>%
+  group_by(clarity) %>%
+  summarize(mean_price = mean(price),
+            median_price = median(price),
+            min_price = min(price),
+            max_price = max(price),
+            n = n()) %>%
+    arrange(clarity)
+head(diamondsByClarity)
+```
+
+```{r Bar Charts of Mean Price}
+# We’ve created summary data frames with the mean price
+# by clarity and color. You can run the code in R to
+# verify what data is in the variables diamonds_mp_by_clarity
+# and diamonds_mp_by_color.
+
+# Your task is to write additional code to create two bar plots
+# on one output image using the grid.arrange() function from the package
+# gridExtra.
+
+# DO NOT DELETE THE LINES OF CODE BELOW
+# ===================================================================
+data(diamonds)
+library(dplyr)
+
+diamonds_by_clarity <- group_by(diamonds, clarity)
+diamonds_mp_by_clarity <- summarise(diamonds_by_clarity, mean_price = mean(price))
+
+diamonds_by_color <- group_by(diamonds, color)
+diamonds_mp_by_color <- summarise(diamonds_by_color, mean_price = mean(price))
+```
+```{r}
+# ENTER YOUR CODE BELOW THIS LINE
+# ===================================================================
+library(gridExtra)
+
+b1 <- ggplot(aes(y = mean_price, x = clarity), data = diamonds_mp_by_clarity) +
+  geom_col()
+b2 <- ggplot(aes(y = mean_price, x = color), data = diamonds_mp_by_color) +
+  geom_col()
+grid.arrange(b1, b2, ncol = 1)
+```
+
+What do you notice in each of the bar charts for mean price by clarity and mean price by color?
+
+There's an inverse relationship between grades of clarity/color and mean price, which seems backwards from what is expected.
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```

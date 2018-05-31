@@ -39,6 +39,10 @@ predictions = clf.predict(features_test)
 print "prediction time:", round(time()-t0, 3), "s"
 # check accuracy of model
 print "accuracy: " + str(accuracy_score(predictions, labels_test))
+import pandas as pd
+pred_df = pd.DataFrame(predictions)
+print "Sara:  ", pred_df[pred_df == 0].count()[1]
+print "Chris: ", pred_df[pred_df == 1].count()[1]
 #########################################################
 
 

@@ -1,0 +1,336 @@
+---
+title: "Lesson 4"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r Load 'diamonds'}
+library(ggplot2) #must load the ggplot package first
+data('diamonds') #loads the diamonds data set since it comes with the ggplot package
+
+# get some basic information about dataset
+names(diamonds)
+str(diamonds)
+levels(diamonds$color)
+?diamonds
+```
+
+```{r Price Histogram}
+# Create a histogram of the price of
+# all the diamonds in the diamond data set.
+qplot(x = price, data = diamonds)
+```
+
+```{r Price Histogram Summary}
+summary(diamonds$price)
+```
+
+```{r Diamond Counts}
+# How many diamonds cost less than $500?
+nrow(subset(diamonds, diamonds$price < 500))
+# How many diamonds cost less than $250?
+nrow(subset(diamonds, diamonds$price < 250))
+# How many diamonds cost $15,000 or more?
+nrow(subset(diamonds, diamonds$price >= 15000))
+```
+
+```{r Cheaper Diamonds}
+qplot(x = price, data = subset(diamonds, !is.na(diamonds$price)), binwidth = 100,
+      color = I('black'), fill = I('#099DD9')) +
+  scale_x_continuous(limits=c(300,10000))
+
+# breaks=c(0,500,10)
+qplot(x = price, data = subset(diamonds, !is.na(diamonds$price)),
+      color = I('black'), fill = I('#099DD9')) +
+  scale_x_log10(limits=c(300,10000))
+
+qplot(x = price, data = subset(diamonds, !is.na(diamonds$price)), binwidth = 100,
+      color = I('black'), fill = I('#099DD9')) +
+  scale_x_continuous(limits=c(300,2500))
+```
+
+```{r Price by Cut - Histograms}
+# Break out the histogram of diamond prices by cut.
+qplot(x = price,
+      data = subset(diamonds, !is.na(diamonds$price)),
+      binwidth = 100,
+      color = cut) +
+  scale_x_continuous(limits=c(300,2500))
+
+# You should have five histograms in separate
+# panels on your resulting plot.
+qplot(x = price,
+      data = subset(diamonds, !is.na(diamonds$price)),
+      binwidth = 100) +
+  scale_x_continuous(limits=c(300,2500)) +
+  facet_grid(cut ~.)
+```
+```{r Price by Cut - 1}
+# Which cut has the highest priced diamond?
+by(diamonds$price, diamonds$cut, max)
+```
+```{r Price by Cut - 2}
+# Which cut has the lowest priced diamond?
+by(diamonds$price, diamonds$cut, min)
+```
+```{r Price by Cut - 3}
+# Which cut has the lowest median price?
+by(diamonds$price, diamonds$cut, median)
+```
+
+```{r Scales and Multiple Histograms}
+qplot(x = price, data = diamonds) + facet_wrap(~cut, scales="free_y", ncol=1)
+```
+```{r Price per Carat by Cut}
+# Create a histogram of price per carat
+# and facet it by cut. You can make adjustments
+# to the code from the previous exercise to get
+# started.
+
+# Adjust the bin width and transform the scale
+# of the x-axis using log10
+qplot(x = price/carat,
+      data = diamonds,
+      color = cut) +
+  scale_x_log10()
+
+qplot(x = price/carat,
+      data = diamonds,
+      bins = 20) +
+  facet_wrap(~cut, nrow = 1) +
+  scale_x_log10()
+
+qplot(x = price/carat,
+      data = diamonds,
+      bins = 20) +
+  scale_x_log10() +
+  facet_wrap(~cut, nrow = 1)
+```
+```{r Price Box Plots - Visualizations}
+# Investigate the price of diamonds using box plots,
+# numerical summaries, and one of the following categorical
+# variables: cut, clarity, or color.
+
+# There won’t be a solution video for this
+# exercise so go to the discussion thread for either
+# BOXPLOTS BY CLARITY, BOXPLOT BY COLOR, or BOXPLOTS BY CUT
+# to share you thoughts and to
+# see what other people found.
+
+# load library to make grid
+library(gridExtra)
+
+# define individual histgram plots
+p1 <- qplot(x = price/carat,
+      data = diamonds,
+      bins = 20) +
+  scale_x_log10()
+p2 <- p1 + facet_wrap(~clarity, nrow = 1)
+p3 <- p1 + facet_wrap(~color, nrow = 1)
+p4 <- p1 + facet_wrap(~cut, nrow = 1)
+# arrange plots in grid
+grid.arrange(p2, p3, p4, nrow=3)
+
+
+# # define individual box plots
+b2 <- qplot(x = clarity, y = price/carat,
+            data = diamonds, geom = 'boxplot') +
+      coord_cartesian(ylim = c(2000,6000))
+b3 <- qplot(x = color, y = price/carat,
+            data = diamonds, geom = 'boxplot') +
+      coord_cartesian(ylim = c(2000,6000))
+b4 <- qplot(x = cut, y = price/carat,
+            data = diamonds, geom = 'boxplot') +
+      coord_cartesian(ylim = c(2000,6000))
+# arrange plots in grid
+grid.arrange(b2, b3, b4, nrow=3)
+```
+```{r Price Box Plots - Sumary Statistics}
+"clarity"
+by(diamonds$price/diamonds$carat, diamonds$clarity, summary)
+"color"
+by(diamonds$price/diamonds$carat, diamonds$color, summary)
+"cut"
+by(diamonds$price/diamonds$carat, diamonds$cut, summary)
+```
+```{r Interquartile Range - IQR}
+"IQR of price for color = D"
+Q1_D = quantile(diamonds$price[diamonds$color == 'D'], 0.25)
+Q3_D = quantile(diamonds$price[diamonds$color == 'D'], 0.75)
+IQR_D = IQR(diamonds$price[diamonds$color == 'D'])
+names(IQR_D) <- c('IQR')
+print(c(Q1_D, Q3_D, IQR_D))
+
+"IQR of price for color = J"
+Q1_J = quantile(diamonds$price[diamonds$color == 'J'], 0.25)
+Q3_J = quantile(diamonds$price[diamonds$color == 'J'], 0.75)
+IQR_J = IQR(diamonds$price[diamonds$color == 'J'])
+names(IQR_J) <- c('IQR')
+print(c(Q1_J, Q3_J, IQR_J))
+# IQR for diamons with best and worst color
+#
+# according to ?diamonds:
+#   diamond colour, from J (worst) to D (best)
+```
+```{r Interquartile Range - IQR (another way)}
+price_by_color = by(diamonds$price, diamonds$color, summary)
+#print(price_by_color)
+
+"IQR of price for color = D"
+Q1_D = price_by_color$D[2]
+Q3_D = price_by_color$D[5]
+IQR_D = Q3_D - Q1_D
+names(IQR_D) <- c('IQR')
+print(c(Q1_D, Q3_D, IQR_D))
+
+"IQR of price for color = J"
+Q1_J = price_by_color$J[2]
+Q3_J = price_by_color$J[5]
+IQR_J = Q3_J - Q1_J
+names(IQR_J) <- c('IQR')
+print(c(Q1_J, Q3_J, IQR_J))
+```
+```{r Price per Carat Box Plots by Color}
+# Investigate the price per carat of diamonds across
+# the different colors of diamonds using boxplots.
+# # define individual box plots
+qplot(x = color, y = price/carat,
+          data = diamonds, geom = 'boxplot') +
+      coord_cartesian(ylim = c(2400,5500))
+```
+```{r Carat Frequency Polygon}
+qplot(x = carat, data = subset(diamonds, !is.na(carat)),
+      binwidth = 0.1, geom = 'freqpoly') + 
+      scale_x_continuous(breaks = seq(0,5,by=0.1), limits = c(0,3)) +
+      scale_y_continuous(breaks = seq(0,15000,by=1000))
+```
+
+```{r Gapminder Data}
+# The Gapminder website contains over 500 data sets with information about
+# the world's population. Your task is to download a data set of your choice
+# and create 2-5 plots that make use of the techniques from Lesson 3.
+
+# You might use a simple histogram, a boxplot split over a categorical variable,
+# or a frequency polygon. The choice is yours!
+
+#import library
+library(readxl)
+suicide_0_14 <- read_excel("Suicide 0-14 all indicator file WHO version 2 june 2010.xlsx", sheet = "Data")
+names(suicide_0_14)[-1] <- as.character(as.numeric(names(suicide_0_14)[-1]))
+
+suicide_15_29 <- read_excel("Suicide 15-29 all indicator file WHO version 2 june 2010.xlsx", sheet = "Data")
+names(suicide_15_29)[-1] <- as.character(as.numeric(names(suicide_15_29)[-1]))
+
+suicide_30_44 <- read_excel("Suicide 30-44 all indicator file WHO version 2 june 2010.xlsx", sheet = "Data")
+names(suicide_30_44)[-1] <- as.character(as.numeric(names(suicide_30_44)[-1]))
+
+suicide_45_59 <- read_excel("Suicide 45-59 all indicator file WHO version 2 june 2010.xlsx", sheet = "Data")
+names(suicide_45_59)[-1] <- as.character(as.numeric(names(suicide_45_59)[-1]))
+
+suicide_60_plus <- read_excel("Suicide 60+ all indicator file WHO version 2 june 2010.xlsx", sheet = "Data")
+names(suicide_60_plus)[-1] <- as.character(as.numeric(names(suicide_60_plus)[-1]))
+```
+
+```{r}
+
+p1 = qplot(x = subset(suicide_45_59, suicide_45_59[1] == 'United States'),
+           data = suicide_0_14)
+
+#p1 = qplot(x = carat, data = suicide_0_14,
+#      binwidth = 0.1, geom = 'freqpoly') + 
+#      scale_x_continuous(breaks = seq(0,5,by=0.1), limits = c(0,3)) +
+#      scale_y_continuous(breaks = seq(0,15000,by=1000))
+```
+
+```{r}
+US_45_59 <- subset(suicide_45_59, suicide_45_59[1] == 'United States')[-1]
+US_45_59
+```
+
+```{r Exploring Your Friends' Birthdays}
+birthdays <- read.csv(file="birthdaysExample.csv")
+# library(lubridate)
+birthdays$dates <- mdy(birthdays$dates)
+p1 = qplot(x = carat, data = suicide_0_14,
+      binwidth = 0.1, geom = 'freqpoly') + 
+      scale_x_continuous(breaks = seq(0,5,by=0.1), limits = c(0,3)) +
+      scale_y_continuous(breaks = seq(0,15000,by=1000))
+
+# How many people share your birthday? Do you know them?
+# (Reserve time with them or save money to buy them a gift!)
+
+# Which month contains the most number of birthdays?
+
+# How many birthdays are in each month?
+
+# Which day of the year has the most number of birthdays?
+
+# Do you have at least 365 friends that have birthdays on everyday
+# of the year?
+```
+
+Full Details:
+
+# Your task is to investigate the distribution of your friends'
+# birth months and days.
+
+# Here some questions you could answer, and we hope you think of others.
+
+# **********************************************************************
+
+# How many people share your birthday? Do you know them?
+# (Reserve time with them or save money to buy them a gift!)
+
+# Which month contains the most number of birthdays?
+
+# How many birthdays are in each month?
+
+# Which day of the year has the most number of birthdays?
+
+# Do you have at least 365 friends that have birthdays on everyday
+# of the year?
+
+# **********************************************************************
+
+# You will need to do some data munging and additional research to
+# complete this task. This task won't be easy, and you may encounter some
+# unexpected challenges along the way. We hope you learn a lot from it though.
+
+# You can expect to spend 30 min or more on this task depending if you
+# use the provided data or obtain your personal data. We also encourage you
+# to use the lubridate package for working with dates. Read over the documentation
+# in RStudio and search for examples online if you need help.
+
+# You'll need to export your Facebooks friends' birthdays to a csv file.
+# You may need to create a calendar of your Facebook friends’ birthdays
+# in a program like Outlook or Gmail and then export the calendar as a
+# csv file.
+
+# Once you load the data into R Studio, you can use the strptime() function
+# to extract the birth months and birth days. We recommend looking up the
+# documentation for the function and finding examples online.
+
+# We've included some links in the Instructor Notes to help get you started.
+
+# Once you've completed your investigation, create a post in the discussions
+# that includes:
+#   1. any questions you answered, your observations, and summary statistics
+#   2. snippets of code that created the plots
+#   3. links to the images of your plots
+
+# You can save images by using the ggsave() command.
+# ggsave() will save the last plot created.
+# For example...
+#                  qplot(x = price, data = diamonds)
+#                  ggsave('priceHistogram.png')
+
+# ggsave currently recognises the extensions eps/ps, tex (pictex),
+# pdf, jpeg, tiff, png, bmp, svg and wmf (windows only).
+
+# Copy and paste all of the code that you used for
+# your investigation below the line. Submit it when you are ready.
+# ===============================================================================
