@@ -23,9 +23,12 @@ a margin line to help you keep track of this guideline!
 # for other code chunks once you have verified that each plot comes out as you
 # want it to. This will clean up the flow of your report.
 
-library(rmarkdown)
 library(ggplot2)
 library(gridExtra)
+library(knitr)
+# library(htmlTable)
+library(dplyr)
+library(GGally)
 ```
 
 ```{r}
@@ -75,12 +78,15 @@ forget to add a comment after each plot or closely-related group of plots!
 There should be multiple code chunks and text sections; the first one below is
 just to help you get started.
 
-```{r}
-
-```
-
 * IncomeRange
-```{r echo=FALSE, IncomeRange_to_Ordered_Factor}
+
+```{r echo=FALSE, IncomeRange_revisions_to_IncomeRange2}
+# histogram of IncomeRange
+# ggplot(aes(x = IncomeRange), data = loanData) +
+#   geom_histogram(stat="count") +
+#   labs(x = "Income Range", y = "N") +
+#   coord_flip()
+
 # The plot of IncomeRange was unordered, so changing the variable to an ordered
 # factor is necessary to get the plot to display logically.
 
@@ -98,22 +104,33 @@ loanData$IncomeRange = factor(loanData$IncomeRange,
                                         "$50,000-74,999",
                                         "$75,000-99,999",
                                         "$100,000+"))
-```
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, Create_IncomeRange2}                          
-# checkout summary of IncomeRange
-summary(loanData$IncomeRange)
+# check summary of IncomeRange
+# kable(summary(loanData$IncomeRange), 
+#       caption="Income Range Counts", 
+#       align = c("r", "l"),
+#       col.names = c("N"),
+#       format = 'pandoc')
 
 # create a new column that merges 'Not employed' and '$0',
 # because unemployed people make $0 in theory
 loanData$IncomeRange2 <- loanData$IncomeRange
 loanData$IncomeRange2[loanData$IncomeRange2 == 'Not employed'] = '$0'
+
+# check summary of IncomeRange2
+# kable(summary(loanData$IncomeRange2),
+#       caption="Revised Income Range Counts",
+#       align = c("r", "l"),
+#       col.names = c("N"),
+#       format = 'pandoc')
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, IncomeRange2_Histogram}
 # graph income ranges in IncomeRange2
 ggplot(aes(x = IncomeRange2), data = loanData) +
-  geom_histogram(stat="count") + coord_flip()
+  geom_histogram(stat="count") +
+  labs(x = "Modified Income Range", y = "N") +
+  coord_flip()
 
 # get rid of 'Not displayed' on the graph
 # ggplot(aes(x = IncomeRange2),
@@ -122,34 +139,46 @@ ggplot(aes(x = IncomeRange2), data = loanData) +
 ```
 
 The histogram of IncomeRange shows that most of the borrowers make between 
-$25,000 to $75,000.
+$25,000 to $75,000. However, there's a decent amount of 'Not displayed', which
+is assumed to be borrower's who wanted to obstain from reporting or having it
+reported. The 'Not displayed' seems to be a lot smaller than most of the range
+counts, so it isn't likely to cause a misrepresentation if this variable is
+used.
 
 * StatedMonthlyIncome
 
-```{r echo=FALSE, StatedMonthlyIncome_Histogram}
-summary(loanData$StatedMonthlyIncome)
+```{r echo=FALSE,  message=FALSE, warning=FALSE, StatedMonthlyIncome_Histogram}
 ggplot(aes(x = StatedMonthlyIncome), data = loanData) +
   geom_histogram(binwidth = 12500) +
-  scale_x_continuous(limits = c(0,175000)) + #, breaks = seq(0,180000,10000)) +
-  scale_y_log10()
+  scale_x_continuous(limits = c(0,175000)) +
+  scale_y_log10() +
+  labs(x = 'Logarithm of Stated Monthly Income', y = 'N')
 ```
+
 The stated monthly income histogram paints a slightly different picture than the
 income range bins. The income range bins had more of a bell-curve type shape,
 whereas the stated income curve looks skewed right.
 
 Will the StatedMonthlyIncome look the same if it is sorted into buckets?
 
-```{r echo=FALSE, StatedMonthlyIncome_Bucket_Histogram}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, StatedMonthlyIncome_Bucket_Histogram}
+# get endpoints for bucketing
+# summary(loanData$StatedMonthlyIncome)
 
-loanData$StatedMonthlyIncome.bucket <- cut(as.numeric(loanData$StatedMonthlyIncome),
-                                           breaks=c(0,1,
-                                                    25000,
-                                                    50000,
-                                                    75000,
-                                                    100000,
-                                                    1750003+1),
-                                           right = FALSE)
-table(loanData$StatedMonthlyIncome.bucket)
+# cut to breakpoints of IncomeRange
+loanData$StatedMonthlyIncome.bucket <-
+  cut(as.numeric(loanData$StatedMonthlyIncome),
+      breaks=c(0,1,
+               25000,
+               50000,
+               75000,
+               100000,
+               1750003+1),
+      right = FALSE)
+
+# verify that bucketing worked
+# table(loanData$StatedMonthlyIncome.bucket)
+
 loanData$StatedMonthlyIncome.bucket <- 
   factor(loanData$StatedMonthlyIncome.bucket)
 # loanData$StatedMonthlyIncome.bucket[loanData$StatedMonthlyIncome <= 100000] =
@@ -161,10 +190,11 @@ loanData$StatedMonthlyIncome.bucket <-
 ggplot(aes(x = StatedMonthlyIncome.bucket),
        data = subset(loanData,
                      !is.na(StatedMonthlyIncome.bucket))) +
-  geom_histogram(stat="count") + coord_flip()
+  geom_histogram(stat="count") + coord_flip() +
+  scale_y_log10() + labs(y = 'log(N)')
 ```
 
-```{r check StatedMonthlyIncome.bucket}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, check StatedMonthlyIncome.bucket}
 # look at IncomeRange2 counts for comparison
 # table(loanData$IncomeRange2)
 
@@ -181,11 +211,12 @@ ggplot(aes(x = StatedMonthlyIncome.bucket),
 ```
 
 The histogram of StatedMonthlyIncome buckets doesn't seem to align with the
-income buckets outlined by IncomeRange.
+income buckets outlined by IncomeRange. Since most of the incomes are all in one
+range, there's some problem with the StatedMonthlyIncome variable.
 
 * Occupation
 
-```{r echo=FALSE, Occupation}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Occupation}
 ggplot(aes(x = Occupation), data = loanData) +
   geom_histogram(stat="count") + coord_flip()
 ```
@@ -196,7 +227,7 @@ different results for instance with a "Nurse's Aide" versus a "Doctor". Also,
 the catch alls of "Other" and "Professional" are ambiguious and seem to 
 dominate; the proportion of Occupation entries:
 
-```{r echo=FALSE, Occupation_counts}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Occupation_counts}
 professions <- c(sum(loanData$Occupation == 'Professional'),
                  sum(loanData$Occupation == 'Other'),
                  sum(loanData$Occupation != 'Other' &
@@ -211,19 +242,30 @@ With almost 40% of Occupation entries unusable, the subgroup analysis probably
 won't produce generalizable results.
 
 * Debt-to-Income Ratio
-```{r echo=FALSE, DebtToIncomeRatio_Histogram}
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, DebtToIncomeRatio_Histogram}
 # summary(loanData$DebtToIncomeRatio)
+
+# this plot is okay, but the bin makes
+# ggplot(aes(x = DebtToIncomeRatio), data = loanData) +
+#   geom_histogram(breaks = seq(0,10,1)) +
+#   #scale_y_log10() +
+#   scale_x_continuous(breaks = seq(0,10,1))
+
+# change bin sizes
 ggplot(aes(x = DebtToIncomeRatio), data = loanData) +
-  geom_histogram(breaks = seq(0,10,1)) +
-  #scale_y_log10() +
-  scale_x_continuous(breaks = seq(0,10,1))
+  geom_histogram(breaks = seq(0,10,0.05)) +
+  scale_y_log10() +
+  scale_x_continuous(breaks = seq(0,10,1)) +
+  labs(x = 'Debt-to-Income Ratio',
+       y = 'Log(N)')
 ```
 
 Almost all the debt-to-income ratios are less than 1. People with more debt to
 pay than their income would have an almost 100% chance of default
 
 
-```{r echo=FALSE, DebtToIncomeRatio_breakpoint_count}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, DebtToIncomeRatio_breakpoint_count}
 dtiRatio <- c(with(loanData,
                    sum(DebtToIncomeRatio[!is.na(DebtToIncomeRatio)] <= 1)),
               with(loanData,
@@ -234,9 +276,12 @@ print(dtiRatio)
 
 * Delinquencies in the Last 7 Years
 
-```{r echo=FALSE, DelinquenciesLast7Years}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, DelinquenciesLast7Years}
 ggplot(aes(x = DelinquenciesLast7Years), data = loanData) +
-  geom_histogram()# + scale_y_log10()
+  geom_histogram(breaks = seq(0,100,5)) +
+  scale_x_continuous(breaks = seq(0,100,25))# + 
+  # log scale misrepresents quantities as higher
+  # scale_y_log10() 
 ```
 
 The users applying for loans had a fair number of instances where the payments
@@ -246,7 +291,7 @@ default.
 
 * Total Trades on the Prosper Platform
 
-```{r echo=FALSE, TotalTrades }
+```{r echo=FALSE,  message=FALSE, warning=FALSE, TotalTrades }
 ggplot(aes(x = TotalTrades), data = loanData) +
   geom_histogram()
 ```
@@ -256,12 +301,22 @@ In general, the number of trades is skewed to the right, but the curve between
 
 * Term Length of Loans
 
-```{r echo=FALSE, Length_of_Terms}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Length_of_Terms}
 ggplot(aes(x = Term), data = loanData) +
   geom_histogram(binwidth = 1) + coord_flip()
 # there looks to be three clear term lengths
 # clear term demarkations can be confirmed by making a table
 table(loanData$Term)
+
+# examine the structure of loanData$Term
+# str(loanData$Term)
+
+# loanData$Term is currently an int
+# change to factor for use in visualization
+# loanData$Term <- factor(loanData$Term,
+#                         levels = c(12,
+#                                    36,
+#                                    60))
 ```
 
 The data set contains only three loan lengths, which correspond to 1, 3, and 5
@@ -269,7 +324,7 @@ years.
 
 * Home Ownership
 
-```{r echo=FALSE, Home_Ownership}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Home_Ownership}
 ggplot(aes(x = IsBorrowerHomeowner), data = loanData) +
   geom_histogram(stat='count') + coord_flip()
 ```
@@ -287,9 +342,10 @@ utilized at the time the credit profile was pulled." It seems like the amount of
 available credit that the borrower is utilizing, or home much of the credit
 card potential have they used.
 
-```{r echo=FALSE, Bankcard_Utilization}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Bankcard_Utilization}
 ggplot(aes(x = BankcardUtilization), data = loanData) +
   geom_histogram(binwidth = 0.05)
+
 ggplot(aes(x = 1, y = BankcardUtilization), data = loanData) +
   geom_boxplot() +
   theme(axis.title.y=element_blank(),
@@ -297,6 +353,7 @@ ggplot(aes(x = 1, y = BankcardUtilization), data = loanData) +
         axis.ticks.y=element_blank(),
         axis.text.x = element_text(angle = 45, hjust = 1)) +
   coord_flip() + scale_y_continuous(breaks = seq(0,6,0.25))
+
 summary(loanData$BankcardUtilization)
 ```
 
@@ -308,7 +365,7 @@ metric to test correlations to in the multivariate analysis.
 
 * Credit Score Range
 
-```{r echo=FALSE, Credit_Scores}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Credit_Scores}
 creditUpper <- ggplot(aes(x = CreditScoreRangeLower), data = loanData) +
   geom_histogram()
 creditLower <- ggplot(aes(x = CreditScoreRangeUpper), data = loanData) +
@@ -319,7 +376,7 @@ The shapes of the upper and lower credit scores histograms look roughly the
 same, so I would expect that the ranges are of a standard length of points. A
 quick graph of the differences will confirm.
 
-```{r echo=FALSE, "Differences of Upper and Lower Credit Scores"}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, "Differences of Upper and Lower Credit Scores"}
 # differences of Upper and Lower Credit Scores
 
 # looks like the range is only one length
@@ -334,7 +391,7 @@ Since the scores are of fixed length, any use of credit scores can use either
 one to view any trends or make predictions.
 
 * Prosper Score
-```{r echo=FALSE, ProsperScore}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, ProsperScore}
 p1 <- ggplot(aes(x = ProsperScore), data = loanData) +
   geom_histogram() +
   scale_x_continuous(limits = c(0,12), breaks = seq(1,11,1))
@@ -352,7 +409,7 @@ maximum is 10. Interestingly, the cleaner plot hides the descreteness of the
 variables.
 
 * Borrower APR
-```{r echo=FALSE, BorrowerAPR}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, BorrowerAPR}
 ggplot(aes(x = BorrowerAPR), data = loanData) +
   geom_histogram()
 ```
@@ -362,7 +419,7 @@ even distribution above and below. This variable will probably be good to use
 as a predictor.
 
 * Loan Amount
-```{r echo=FALSE, LoanOriginalAmount}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, LoanOriginalAmount}
 ggplot(aes(x = LoanOriginalAmount), data = loanData) +
   geom_histogram(binwidth = 1000) +
   scale_x_continuous(limits = c(2000,40000), breaks = seq(2000,40000,2000)) +
@@ -400,7 +457,8 @@ Additional features that might build a richer picture would include:
 "Investors" - how many people have confidence that the borrower will pay?
 "Recommentations" - how many people vouch for the borrower?
 "EmploymentStatusDuration" - is the borrower's cashflow consistent?
-"Occupation" - this might have an influence, but the categories are questionable
+"Estimated Return"
+"Estimated Loss"
 
 ### Did you create any new variables from existing variables in the dataset?
 I created IncomeRange2 and StatedMonthlyIncome.bucket:
@@ -432,8 +490,342 @@ yourself to relationships between a main output feature and one of the
 supporting variables. Try to look at relationships between supporting variables
 as well.
 
-```{r echo=FALSE, Bivariate_Plots}
+```{r echo=FALSE,  message=FALSE, warning=FALSE Bivariate_Plots}
+pairs(loanData[,c("ProsperScore",
+                  "IncomeRange",
+                  "DebtToIncomeRatio",
+                  "DelinquenciesLast7Years",
+                  "TotalTrades",
+                  "Term",
+                  "IsBorrowerHomeowner",
+                  "BankcardUtilization",
+                  "BorrowerAPR",
+                  "LoanOriginalAmount",
+                  "CreditScoreRangeLower")])
+```
 
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Bivariate_Plots2}
+ggpairs(data = loanData, 
+        columns = c("ProsperScore",
+                    "IncomeRange",
+                    "DebtToIncomeRatio",
+                    "DelinquenciesLast7Years",
+                    "TotalTrades",
+                    "Term",
+                    "IsBorrowerHomeowner",
+                    "BankcardUtilization",
+                    "BorrowerAPR",
+                    "LoanOriginalAmount",
+                    "CreditScoreRangeLower"),
+        axisLabels = "show")
+
+# pairs(loanData[,c("ProsperScore",
+#                   "IncomeRange",
+#                   "DebtToIncomeRatio",
+#                   "DelinquenciesLast7Years")])
+# pairs(loanData[,c("ProsperScore",
+#                   "TotalTrades",
+#                   "Term",
+#                   "IsBorrowerHomeowner")])
+# pairs(loanData[,c("ProsperScore",
+#                   "BankcardUtilization",
+#                   "BorrowerAPR",
+#                   "LoanOriginalAmount",
+#                   "CreditScoreRangeLower")])
+```
+
+
+Prosper score seems like a good place to start looking at affects of variables
+on each other since it is a sort of summation of risk for the loan. The amount
+of risk is usually passed on as a loan penalty in the form of APR. Therefore,
+there should be relationship between Prosper and APR such that increased Prosper
+score should have a lower APR and vice versa.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Prosper_vs_APR}
+ggplot(aes(x = BorrowerAPR,
+           y = ProsperScore,
+           color = Term),
+       data = loanData) +
+  geom_jitter(alpha = 1/20)
+```
+
+As expected, there's a relationship with borrower APR and Prosper score. The
+higher the Prosper score, the less risk, so the APR is lower. The coloring of
+the visualization doesn't reveal that Term clearly augments this relationship
+despite longer term loans having an intrinsically higher risk.
+
+Since Prosper score is proprietary, it will be interesting to find out what else
+goes into the Proper score. Outside of Prosper, APRs generally trend with the
+non-proprietary credit score, so Prosper score and credit score would be
+expected to be roughly trend together.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, PropserScore_vs_CreditScoreRangeLower}
+ggplot(aes(x = CreditScoreRangeLower,
+           y = ProsperScore),
+       data = loanData) +
+  geom_jitter(alpha = 1/30, aes(color = IncomeRange2)) +
+  coord_flip()
+```
+
+Strangely, there doesn't seem to be much correlation if any between Prosper
+score and Credit score despite both being compilation measures of risk for
+financial institutions. Just how weak is the correlation?
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Propser_vs_Credit_Correlation}
+with(loanData, cor.test(ProsperScore,CreditScoreRangeLower))
+```
+
+Despite the weak correlation of Prosper score and credit score, the coloring of
+the visualation does reveal that people with higher income are more likely to
+have a higher Prosper score, regardless of credit score.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, CreditScoreRangeLower_vs_APR}
+ggplot(aes(x = BorrowerAPR,
+           y = CreditScoreRangeLower,
+           color = Term),
+       data = loanData) +
+  geom_point(alpha = 1/20)
+
+with(loanData, cor.test(ProsperScore,BorrowerAPR))
+with(loanData, cor.test(CreditScoreRangeLower,BorrowerAPR))
+```
+
+
+
+
+
+
+
+
+Another measure of interest would be the relationship between the debt-to-income
+ratio and Prosper score, since it is more risky to grant a loan to a borrower
+as their amount of existing debt increases, or the borrower is more leveraged.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Prosper_vs_DebtToIncomeRatio}
+ggplot(aes(x = DebtToIncomeRatio,
+           y = ProsperScore),
+       data = loanData) +
+  geom_jitter(alpha = 1/5, aes(color = IncomeRange2)) +
+  xlim(c(0,1))
+```
+
+The relationship between debt-to-income ratio and Prosper score isn't as obvious
+as expected, but the debt-to-income ratio range for the Prosper score extends
+farther into a bad ratio for lower Prosper scores. However, the visualization
+does show a relationship between the Prosper scare and income range. Borrowers
+with a higher income are more likely to have a higher Prosper score across all
+debt-to-income ratios.
+
+Does total trades affect the Prosper score?
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Prosper_vs_TotalTrades}
+ggplot(aes(x = TotalTrades,
+           y = ProsperScore,
+           color = loanData$TradesNeverDelinquent..percentage),
+       data = loanData) +
+  geom_jitter(alpha = 1/20) +
+  labs(x = 'Total Trades',
+       y = 'Prosper Score',
+       color = '% Good Trades') +
+  scale_x_continuous(limits = c(0,60))
+```
+
+The total number of trades on the platform doesn't affect the Prosper score. 
+To eliminate the possibility of delinquent trades and good trades mixed together
+causing hiding any trend, coloring based on percentage of good trades was added.
+The coloring shows that all the colors are dispersed fairly evenly, so there
+really isn't any trend.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Create_GoodTrades}
+# create a column for good trades
+# loanData$GoodTrades <- loanData$TradesNeverDelinquent..percentage * loanData$TotalTrades
+# 
+# graph good trades
+# ggplot(aes(x = GoodTrades,
+#            y = ProsperScore),
+#        data = loanData) +
+#   geom_jitter(alpha = 1/20)
+
+# the visualation of GoodTrades isn't any clearer and still shows no trend
+```
+
+The amount of delinquencies should affect the BorrowerAPR and Prosper score, 
+since delinquencies could be a sign that the borrow has a hard time paying back
+the loan.
+
+```{r APR_vs_Deliquencies}
+# None of these show a trend
+#
+# aprVdeliq <- ggplot(aes(x = DelinquenciesLast7Years,
+#                             y = BorrowerAPR),
+#                         data = loanData)
+# aprVdeliq1 <- aprVdeliq + geom_jitter(alpha = 1/40)
+# aprVdeliq2 <- aprVdeliq + geom_jitter(alpha = 1/40, 
+#                                               aes(color = IsBorrowerHomeowner))
+# aprVdeliq3 <- aprVdeliq + geom_jitter(alpha = 1/40, 
+#                                               aes(color = Term))
+# aprVdeliq4 <- aprVdeliq + geom_jitter(alpha = 1/40, 
+#                                               aes(color = IncomeRange2))
+# grid.arrange(aprVdeliq1, aprVdeliq2, aprVdeliq3, aprVdeliq4)
+
+ggplot(aes(x = DelinquenciesLast7Years,
+           y = BorrowerAPR),
+       data = loanData) +
+  geom_jitter(alpha = 1/40)
+```
+
+The expected trend between APR and delinquencies doesn't seem to show up even
+when coloring based on previously identified categories. Will Prosper score 
+show the same lack of trend? Or will the expected trend appear?
+
+```{r Prosper_vs_Deliquencies}
+# None of these show a trend
+#
+# propserVdeliq <- ggplot(aes(x = DelinquenciesLast7Years,
+#                             y = ProsperScore),
+#                         data = loanData)
+# propserVdeliq1 <- propserVdeliq + geom_jitter(alpha = 1/30)
+# propserVdeliq2 <- propserVdeliq + geom_jitter(alpha = 1/30, 
+#                                               aes(color = IsBorrowerHomeowner))
+# propserVdeliq3 <- propserVdeliq + geom_jitter(alpha = 1/30, 
+#                                               aes(color = Term))
+# propserVdeliq4 <- propserVdeliq + geom_jitter(alpha = 1/30, 
+#                                               aes(color = IncomeRange2))
+# grid.arrange(propserVdeliq1, propserVdeliq2, propserVdeliq3, propserVdeliq4)
+
+ggplot(aes(x = DelinquenciesLast7Years,
+           y = ProsperScore),
+       data = loanData) +
+  geom_jitter(alpha = 1/30)
+```
+
+Another logical affector on measures of risk (Prosper score and borrower APR)
+would be how much available credit a borrower has to fulfill the obligation to
+the Prosper loan. In theory, its a liquidity measure, so the more unused
+immediately usable credit, the higher the Prosper score and lower the APR.
+
+```{r}
+# ProsperScore
+ggplot(aes(x = BankcardUtilization,
+           y = ProsperScore,
+           color = loanData$TradesNeverDelinquent..percentage),
+       data = loanData) +
+  geom_jitter(alpha = 1/30) +
+  scale_x_continuous(limits = c(0,1)) +
+  labs(color = '% Good Trades')
+             
+# BorrowerAPR
+ggplot(aes(x = BankcardUtilization,
+           y = BorrowerAPR,
+           color = loanData$TradesNeverDelinquent..percentage),
+       data = loanData) +
+  geom_jitter(alpha = 1/40) +
+  scale_x_continuous(limits = c(0,1)) +
+  labs(color = '% Good Trades')
+
+# correlations:
+#
+# with(loanData, cor.test(BankcardUtilization, ProsperScore))
+# with(loanData, cor.test(BankcardUtilization, BorrowerAPR))
+```
+
+The expected trends hold up for Prosper score and APR vs bankcard utilization.
+
+There haven't been too many trends in the Prosper score, so borrower APR will be
+the forcus moving forward.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, IncomeRange2_vs_BorrowerAPR_1}
+ggplot(aes(x = BorrowerAPR,
+           y = IncomeRange2,
+           color = LoanOriginalAmount),
+       data = subset(loanData,
+                     IncomeRange2 != 'Not displayed')) +
+  geom_jitter(alpha = 1/30)
+```
+
+Looking at the income range and borrower APR visualization, the APR's of higher
+income borrowers are consolidated in a narrower areas in the lower APR range.
+The high income borrowers look more likely to take out loans of higher amounts.
+Lower income borrowers with low APR seem slightly more likely to take out larger
+loan amounts.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, IncomeRange2_vs_BorrowerAPR_2}
+ggplot(aes(x = BorrowerAPR,
+           y = IncomeRange2,
+           color = Term),
+       data = subset(loanData,
+                     IncomeRange2 != 'Not displayed')) +
+  geom_jitter(alpha = 1/10)
+```
+
+Having an asset like a house would theoretically be good if a borrower is going
+to take a loan.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, IncomeRange2_vs_BorrowerAPR_2}
+ggplot(aes(x = BorrowerAPR,
+           color = IsBorrowerHomeowner),
+       data = subset(loanData,
+                     IncomeRange2 != 'Not displayed')) +
+  geom_freqpoly()
+```
+
+The expected relationship between APR and homeownership doesn't seem to hold
+true. Is there a relationship between homeownership and income range?
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, IncomeRange2_vs_Homeowner}
+# ggplot(aes(x = IncomeRange2),
+#        data = subset(loanData,
+#                      IncomeRange2 != 'Not displayed')) +
+#   geom_histogram(stat='count') +
+#   facet_grid(IsBorrowerHomeowner~.)
+
+# this is a little clearer, despite being an awkward visualization
+ggplot(aes(x = IsBorrowerHomeowner,
+           y = IncomeRange2),
+       data = subset(loanData,
+                     IncomeRange2 != 'Not displayed')) +
+  geom_jitter(alpha = 1/30)
+```
+
+People that make more money seem to be more likely to own a house, but the
+effect isn't as strong as expected in the upper incomes.
+
+```{r}
+ggplot(aes(x = BorrowerAPR,
+           y = IncomeRange2,
+           color = IsBorrowerHomeowner),
+       data = subset(loanData,
+                     IncomeRange2 != 'Not displayed')) +
+  geom_jitter(alpha = 1/30)
+```
+
+This visualization shows similar results to the previous ones. Borrower's with
+higher incomes are more likely to have a better APR and be homeowners. The
+visualization potentially misrepresents that there's a stronger relationship
+with homeownership and APR.
+
+
+Despite it popping up in other visualizations, 
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Bivariate_Plots}
+ggplot(aes(x = IncomeRange2,
+           y = ProsperScore),
+       data = loanData) +
+  geom_jitter(alpha = 1/30)
+```
+
+```{r}
+ggpairs(data = loanData,
+        columns = c('BorrowerAPR',
+                    'ProsperScore',
+                    'IncomeRange2',
+                    'LoanStatus',
+                    'Investors',
+                    'EmploymentStatusDuration',
+                    'Recommendations',
+                    'EstimatedReturn',
+                    'EstimatedLoss'),
+        axisLabels = 'show')
 ```
 
 # Bivariate Analysis
@@ -529,3 +921,4 @@ saving your final work and knitting the final report!
 [Debt to Income Ratio](https://www.consumerfinance.gov/ask-cfpb/what-is-a-debt-to-income-ratio-why-is-the-43-debt-to-income-ratio-important-en-1791/)
 [Remove all of x axis labels in ggplot (duplicate)](https://stackoverflow.com/questions/35090883/remove-all-of-x-axis-labels-in-ggplot?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
 [2 column Section in R Markdown](https://stackoverflow.com/questions/31753897/2-column-section-in-r-markdown?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
+[Tables with htmlTable and some alternatives](https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html)
