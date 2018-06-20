@@ -805,16 +805,24 @@ visualization potentially misrepresents that there's a stronger relationship
 with homeownership and APR.
 
 
-Despite it popping up in other visualizations, 
+Despite it popping up in other visualizations, the relationship between Prosper
+score and income range hasn't been examined.
 
-```{r echo=FALSE,  message=FALSE, warning=FALSE, Bivariate_Plots}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Prosper_v_IncomeRange2}
 ggplot(aes(x = IncomeRange2,
            y = ProsperScore),
        data = loanData) +
   geom_jitter(alpha = 1/30)
 ```
 
-```{r}
+The relationship isn't as clear as expected, but the trend for higher Prosper
+score for higher income range is there.
+
+* Auxiliary Measures
+
+Plots to look it will be sifted from a quick grid of relationships.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, ggpairs_auxiliary}
 ggpairs(data = loanData,
         columns = c('BorrowerAPR',
                     'ProsperScore',
@@ -828,6 +836,86 @@ ggpairs(data = loanData,
         axisLabels = 'show')
 ```
 
+The Propser score and estimated return look like they have some sort of
+relationship, so that will be first.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE,}
+ggplot(data = loanData,
+       aes(x = EstimatedReturn,
+           y = ProsperScore)) +
+  geom_jitter(alpha = 1/20) +
+  scale_x_continuous(limits = c(0, 0.2))
+```
+
+The visualization is zoomed in where the most points are. There seems to be a
+correlation, which makes sense. The higher the Prosper score, the less risk, so
+the APR should be lower to reflect that, which means the return from interest
+will be lower, in turn. The relationship can be verified by looking at the APR
+visualizations.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, APR_v_EstimatedReturn}
+ggplot(data = loanData,
+       aes(x = EstimatedReturn,
+           y = BorrowerAPR,
+           color = Term)) +
+  geom_jitter()
+
+ggplot(data = loanData,
+       aes(x = EstimatedReturn,
+           y = BorrowerAPR,
+           color = ProsperScore)) +
+  geom_jitter() +
+  facet_grid(Term~.)
+
+# grid.arrange(# Plot 1
+#              ggplot(data = loanData,
+#                     aes(x = EstimatedReturn,
+#                         y = BorrowerAPR,
+#                         color = Term)) +
+#                geom_jitter(),
+#              # Plot 2
+#              ggplot(data = loanData,
+#                     aes(x = EstimatedReturn,
+#                         y = BorrowerAPR,
+#                         color = ProsperScore)) +
+#                geom_jitter() +
+#                facet_grid(Term~.),
+#              # Options
+#              nrow = 1)
+```
+
+The relationship between return an APR was interesting. There looked to be a
+trend, but also it was clear there was something else augmenting it because
+there was banding and some trends with different slope. After splitting the
+visualization, most of the trends can be seen as owing to term length and
+Prosper score (risk).
+
+Another variable that seems to have some trends form the grid is employment
+duration.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, employment_duration_plots}
+ggplot(data = loanData,
+       aes(x = EmploymentStatusDuration,
+           y = IncomeRange2)) +
+  geom_jitter(alpha = 1/50) +
+  scale_x_continuous()
+
+ggplot(data = loanData,
+       aes(x = EmploymentStatusDuration,
+           y = EstimatedReturn,
+           color = BorrowerAPR)) +
+  geom_point()
+```
+
+In the grid, there seemed to be a clearer positive correlation between
+employment duration and income range, but on closer inspection, the employment
+duration seems to peak in the middle income ranges and then reduce back to a
+slightly higher baseline.
+
+Additionally, there seemed to be a relationship with employment duration and
+estimated return, but the trend seems to be blending of APR bands across all
+employment durations.
+
 # Bivariate Analysis
 
 > **Tip**: As before, summarize what you found in your bivariate explorations
@@ -836,6 +924,8 @@ here. Use the questions below to guide your discussion.
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
 the dataset?
+
+
 
 ### Did you observe any interesting relationships between the other features \
 (not the main feature(s) of interest)?
@@ -879,17 +969,75 @@ that you have refined your selected plots for good titling, axis labels (with
 units), and good aesthetic choices (e.g. color, transparency). After each plot,
 make sure you justify why you chose each plot by describing what it shows.
 
-### Plot One
-```{r echo=FALSE, Plot_One}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_theme_updates}
+# center titles of all plots
+theme_update(plot.title = element_text(hjust = 0.5))
+```
 
+### Plot One
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_One}
+ggplot(data = loanData,
+       aes(x = BorrowerAPR,
+           y = ProsperScore,
+           color = IncomeRange2)) +
+  geom_jitter(alpha = 1/10) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(breaks = seq(0,10,2),
+                     labels = seq(0,10,2)) +
+  labs(title = 'Relationship of income range to Prosper score and APR',
+       x = 'Borrower\'s Interest Rate [APR]',
+       y = 'Prosper Score',
+       color = 'Income Range') +
+  scale_colour_brewer(type = 'seq',
+                      palette = 'YlGnBu',
+                      guide = guide_legend(override.aes = list(alpha = 1,
+                                                               size = 2)))
 ```
 
 ### Description One
-
+The visualization shows the relationship of the proprietary risk score to the
+borrower's interest rate (APR) and income range. In theory, a better (higher) 
+Prosper score means less risk and, therefore, a lower borrowing penalty in the
+form of interest rate. Additionally, a higher cashflow, in the form of income
+range, should reduce risk and result in a higher Prosper score and lower
+interest rate. The plot corroborates with the theory behind the relationships. 
 
 ### Plot Two
-```{r echo=FALSE, Plot_Two}
+```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Two}
 
+loanData$ProsperScore2 <- cut(loanData$ProsperScore, 
+                              breaks = c(seq(0,11,1)), 
+                              labels = as.character(seq(1,11,1)), 
+                              right = TRUE)
+loanData$ProsperScore2 <- factor(loanData$ProsperScore2,
+                                 levels = as.character(seq(1,11,1)))
+
+loanData$Term2 <- cut(loanData$Term,
+                      breaks = c(0,12,36,60), 
+                      labels = as.character(c(12,36,60)), 
+                      right = TRUE)
+loanData$Term2 <- factor(loanData$Term2,
+                         levels = as.character(c(12,36,60)))
+                              
+                              
+ggplot(data = loanData,
+       aes(x = EstimatedReturn,
+           y = BorrowerAPR,
+           color = ProsperScore2)) +
+  geom_jitter(alpha = 1/2) +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  facet_grid(Term2~.) +
+  labs(title = paste('Relationship of estimated return to ',
+                     'interest rate and Prosper score'),
+       y = 'Borrower\'s Interest Rate [APR]',
+       x = 'Estimated Return',
+       color = 'Prosper Score') +
+  scale_colour_brewer(type = 'div',
+                      #palette = 'Accent',
+                      guide = guide_legend(override.aes = list(alpha = 1,
+                                                               size = 2)))
 ```
 
 ### Description Two
@@ -897,7 +1045,11 @@ make sure you justify why you chose each plot by describing what it shows.
 
 ### Plot Three
 ```{r echo=FALSE, Plot_Three}
-
+ggplot(aes(x = DebtToIncomeRatio,
+           y = ProsperScore),
+       data = loanData) +
+  geom_jitter(alpha = 1/5, aes(color = IncomeRange2)) +
+  xlim(c(0,1))
 ```
 
 ### Description Three
@@ -922,3 +1074,4 @@ saving your final work and knitting the final report!
 [Remove all of x axis labels in ggplot (duplicate)](https://stackoverflow.com/questions/35090883/remove-all-of-x-axis-labels-in-ggplot?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
 [2 column Section in R Markdown](https://stackoverflow.com/questions/31753897/2-column-section-in-r-markdown?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
 [Tables with htmlTable and some alternatives](https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html)
+[Center Plot title in ggplot2](https://stackoverflow.com/questions/40675778/center-plot-title-in-ggplot2)
