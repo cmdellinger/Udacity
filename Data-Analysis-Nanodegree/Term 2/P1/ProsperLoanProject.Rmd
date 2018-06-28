@@ -1,3 +1,49 @@
+<style type="text/css">
+<!-- used verbatim
+     from: 2 column Section in R Markdown
+     at: https://goo.gl/JwRLv4 -->
+  .col2 {
+    columns: 2 200px;         /* number of columns and width in pixels*/
+    -webkit-columns: 2 200px; /* chrome, safari */
+    -moz-columns: 2 200px;    /* firefox */
+  }
+  .col3 {
+    columns: 3 100px;
+    -webkit-columns: 3 100px;
+    -moz-columns: 3 100px;
+  }
+<!-- used original as template
+     from: Rmarkdown font size and header
+     at:  https://goo.gl/GRJVvJ -->
+  body{ /* Normal  */
+        /*font-size: 12px;*/
+    }
+  td {  /* Table  */
+    /*font-size: 8px;*/
+  }
+  h1.title {
+    color: DarkBlue;
+  }
+  h1 { /* Header 1 */
+    color: DarkBlue;
+  }
+  h2 { /* Header 2 */
+    /*font-size: 22px;*/
+    color: DarkBlue;
+  }
+  h3 { /* Header 3 */
+    /* font-size: 18px; */
+    /* font-family: "Times New Roman", Times, serif; */
+    color: DarkBlue;
+  }
+  code.r{ /* Code block */
+      /* font-size: 12px; */
+  }
+  pre { /* Code block - determines code spacing between lines */
+      /* font-size: 14px; */
+  }
+</style>
+
 **Analysis of contributors to Prosper loan scores**<br>by Charles Dellinger
 ========================================================
 
@@ -56,7 +102,7 @@ sort(names(loanData))
 
 > # **Univariate Exploration**
 
-# Univariate Plots Section
+## Univariate Plots Section
 
 ### IncomeRange
 
@@ -127,12 +173,22 @@ used.
 
 ### StatedMonthlyIncome
 
-```{r echo=FALSE,  message=FALSE, warning=FALSE, StatedMonthlyIncome_Histogram}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, StatedIncome_Histogram}
 ggplot(aes(x = StatedMonthlyIncome), data = loanData) +
   geom_histogram(binwidth = 12500) +
   scale_x_continuous(limits = c(0,175000)) +
-  scale_y_log10() +
-  labs(x = 'Logarithm of Stated Monthly Income', y = 'N')
+  labs(x = 'Stated Monthly Income', y = 'N')
+```
+
+The stated monthly incomes look to be all bunched up in the low end. Zooming in
+on the plot will give a better idea of the distribution.
+
+```{r echo=FALSE,  message=FALSE, warning=FALSE, Log_StatedIncome_Histogram}
+ggplot(aes(x = StatedMonthlyIncome), data = loanData) +
+  geom_histogram(binwidth = 1000) +
+  scale_x_continuous(limits = c(0,30000)) +
+  #scale_y_log10() +
+  labs(x = 'Stated Monthly Income', y = 'N')
 ```
 
 The stated monthly income histogram paints a slightly different picture than the
@@ -153,7 +209,7 @@ loanData$StatedMonthlyIncome.bucket <-
                50000,
                75000,
                100000,
-               1750003+1),
+               Inf),
       labels=c("$0",
                "$1-24,999",
                "$25,000-49,999",
@@ -177,7 +233,7 @@ ggplot(aes(x = StatedMonthlyIncome.bucket),
        data = subset(loanData,
                      !is.na(StatedMonthlyIncome.bucket))) +
   geom_histogram(stat="count") + coord_flip() +
-  scale_y_log10() + labs(y = 'log(N)')
+  labs(y = 'N')
 ```
 
 ```{r echo=FALSE,  message=FALSE, warning=FALSE, check_income_buckets}
@@ -202,7 +258,7 @@ range, there's some problem with the StatedMonthlyIncome variable.
 
 ### Occupation
 
-```{r echo=FALSE,  message=FALSE, warning=FALSE, Occupation}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, fig.height=8, Occupation}
 ggplot(aes(x = Occupation), data = loanData) +
   geom_histogram(stat="count") + coord_flip()
 ```
@@ -233,23 +289,14 @@ won't produce generalizable results.
 # summary(loanData$DebtToIncomeRatio)
 
 # this plot is okay, but the bin makes
-# ggplot(aes(x = DebtToIncomeRatio), data = loanData) +
-#   geom_histogram(breaks = seq(0,10,1)) +
-#   #scale_y_log10() +
-#   scale_x_continuous(breaks = seq(0,10,1))
-
-# change bin sizes
 ggplot(aes(x = DebtToIncomeRatio), data = loanData) +
-  geom_histogram(breaks = seq(0,10,0.05)) +
-  scale_y_log10() +
-  scale_x_continuous(breaks = seq(0,10,1)) +
-  labs(x = 'Debt-to-Income Ratio',
-       y = 'Log(N)')
+  geom_histogram(breaks = seq(0,10,1)) +
+  #scale_y_log10() +
+  scale_x_continuous(breaks = seq(0,10,1))
 ```
 
 Almost all the debt-to-income ratios are less than 1. People with more debt to
-pay than their income would have an almost 100% chance of default
-
+pay than their income would have an almost 100% chance of default.
 
 ```{r echo=FALSE,  message=FALSE, warning=FALSE, DebtToIncomeRatio_breakpoint_count}
 dtiRatio <- c(with(loanData,
@@ -258,6 +305,28 @@ dtiRatio <- c(with(loanData,
                    sum(DebtToIncomeRatio[!is.na(DebtToIncomeRatio)] > 1)))
 names(dtiRatio) <- c('<= 1', '> 1')
 print(dtiRatio)
+```
+
+Creating custom bins can help get a better feel with for the data with smaller
+bins in the lower ratio sections to see finer details there.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, More_DebtToIncome_Histograms, fig.width=12}
+custom_scale <- c(seq(0,0.9,0.1),
+                  seq(1,2.8,0.2),
+                  seq(3,5.5,0.5),
+                  seq(6,10,1))
+ggplot(aes(x = DebtToIncomeRatio), data = loanData) +
+  geom_histogram(breaks = custom_scale, size=10) +
+  scale_x_continuous(breaks = custom_scale) +
+    theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+# try log transform
+# ggplot(aes(x = DebtToIncomeRatio), data = loanData) +
+#   geom_histogram(breaks = seq(0,10,0.05)) +
+#   scale_y_log10() +
+#   scale_x_continuous(breaks = seq(0,10,1)) +
+#   labs(x = 'Debt-to-Income Ratio',
+#        y = 'Log(N)')
 ```
 
 ### Delinquencies in the Last 7 Years
@@ -289,7 +358,7 @@ In general, the number of trades is skewed to the right, but the curve between
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Length_of_Terms}
 ggplot(aes(x = Term), data = loanData) +
-  geom_histogram(binwidth = 1) + coord_flip()
+  geom_histogram(binwidth = 1)
 ```
 
 The loans seem to be grouped in three discrete lengths.
@@ -325,14 +394,15 @@ loanData$Term2 <- factor(loanData$Term2,
                                                  "3 years",
                                                  "5 years")))
 ggplot(aes(x = Term2), data = loanData) +
-  geom_histogram(stat='count') + coord_flip()
+  geom_bar()
 ```
 
 ### Home Ownership
 
 ```{r echo=FALSE,  message=FALSE, warning=FALSE, Home_Ownership}
 ggplot(aes(x = IsBorrowerHomeowner), data = loanData) +
-  geom_histogram(stat='count') + coord_flip()
+  # geom_histogram(stat='count') + coord_flip()
+  geom_bar()
 ```
 
 Home ownership would show that a person has an asset, which would make the loan
@@ -405,21 +475,41 @@ one to view any trends or make predictions.
 ### Prosper Score
 
 ```{r echo=FALSE,  message=FALSE, warning=FALSE, ProsperScore}
-p1 <- ggplot(aes(x = ProsperScore), data = loanData) +
+# p1 <- ggplot(aes(x = ProsperScore), data = loanData) +
+#   geom_histogram() +
+#   scale_x_continuous(limits = c(0,12), breaks = seq(1,11,1))
+# # the cleaner plot hides that the scores are discrete
+# p2 <- ggplot(aes(x = ProsperScore), data = loanData) +
+#   geom_histogram(binwidth = 1, color = 'black', fill = 'blue') +
+#   scale_x_continuous(limits = c(0,12), breaks = seq(1,11,1))
+# grid.arrange(p1, p2, ncol = 1)
+
+ggplot(aes(x = ProsperScore), data = loanData) +
   geom_histogram() +
   scale_x_continuous(limits = c(0,12), breaks = seq(1,11,1))
-# the cleaner plot hides that the scores are discrete
-p2 <- ggplot(aes(x = ProsperScore), data = loanData) +
-  geom_histogram(binwidth = 1, color = 'black', fill = 'blue') +
-  scale_x_continuous(limits = c(0,12), breaks = seq(1,11,1))
-grid.arrange(p1, p2, ncol = 1)
+
 table(loanData$ProsperScore)
 ```
 
 There seem to be only discrete Prosper scores and for some reason there are
 score at 11, despite the range in the variable definition file indicating the
-maximum is 10. Interestingly, the cleaner plot hides the discreteness of the 
-variables.
+maximum is 10. Since Prosper score is made up of discrete levels, it can be
+transformed into a categorical variable.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE, Create_ProsperScore2}
+# create a discrete variable to change Prosper score to categorical
+loanData$ProsperScore2 <- cut(loanData$ProsperScore,
+                              breaks = c(seq(0,11,1)),
+                              labels = as.character(seq(1,11,1)),
+                              right = TRUE)
+loanData$ProsperScore2 <- factor(loanData$ProsperScore2,
+                                 levels = as.character(seq(1,11,1)))
+
+ggplot(aes(x = ProsperScore2), 
+       data = subset(loanData,
+                     !is.na(ProsperScore2))) +
+  geom_bar()
+```
 
 ### Borrower APR
 
@@ -446,7 +536,7 @@ the loans are of low value, but there are some clear spikes at higher numbers
 at 5k intervals ($10000, $15000, $20000, $25000), which shows a bias for people
 rounding off for their needs.
 
-# Univariate Analysis
+## Univariate Analysis
 
 ### What is the structure of your dataset?
 There are 113937 entries, each containing 84 variables of different types.
@@ -481,6 +571,8 @@ I created IncomeRange2 and StatedMonthlyIncome.bucket:
 * StatedMonthlyIncome.bucket - bucketed the StatedMonthlyIncome to test against
 IncomeRange, but the results made it seem like the monthly income wasn't as
 reliable.
+* Term2 - changed Term into a categorical variable
+* ProsperScore2 - changed ProsperScore into a categorical variable
 
 ### Of the features you investigated, were there any unusual distributions? \
 Did you perform any operations on the data to tidy, adjust, or change the form \
@@ -504,11 +596,11 @@ variable, so the plot sections have been merged together. Most of the plots are
 multivariate, but there are a few bivariate where the relationship is
 straightforward enough.
 
-# Bivariate & Multivariate Plots Section
+## Bivariate & Multivariate Plots Section
 
 A quick grid of relationships to see if anything sticks out:
 
-```{r echo=FALSE,  message=FALSE, warning=FALSE, primary_variables_grid}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, fig.height=16, fig.width=16, variables_grid}
 # pairs of primary variables
 ggpairs(data = loanData,
         columns = c("ProsperScore",
@@ -766,11 +858,11 @@ The expected relationship between APR and home ownership doesn't seem to hold
 true. Is there a relationship between home ownership and income range?
 
 ```{r echo=FALSE,  message=FALSE, warning=FALSE, IncomeRange2_vs_Homeowner}
-# ggplot(aes(x = IncomeRange2),
-#        data = subset(loanData,
-#                      IncomeRange2 != 'Not displayed')) +
-#   geom_histogram(stat='count') +
-#   facet_grid(IsBorrowerHomeowner~.)
+ ggplot(aes(x = IncomeRange2),
+        data = subset(loanData,
+                      IncomeRange2 != 'Not displayed')) +
+   geom_histogram(stat='count') +
+   facet_grid(IsBorrowerHomeowner~., labeller = label_both)
 
 # this is a little clearer, despite being an awkward visualization
 ggplot(aes(x = IsBorrowerHomeowner,
@@ -815,7 +907,7 @@ score for higher income range is there.
 
 Plots to look it will be sifted from a quick grid of relationships.
 
-```{r echo=FALSE,  message=FALSE, warning=FALSE, ggpairs_auxiliary}
+```{r echo=FALSE,  message=FALSE, warning=FALSE, fig.height=12, fig.width=12, ggpairs_auxiliary}
 ggpairs(data = loanData,
         columns = c('BorrowerAPR',
                     'ProsperScore',
@@ -853,10 +945,11 @@ ggplot(data = loanData,
            color = Term2)) +
   geom_jitter()
 
-ggplot(data = loanData,
+ggplot(data = subset(loanData,
+                     !is.na(ProsperScore2)),
        aes(x = EstimatedReturn,
            y = BorrowerAPR,
-           color = ProsperScore)) +
+           color = ProsperScore2)) +
   geom_jitter(alpha = 1/10) +
   facet_grid(Term2~.)
 ```
@@ -893,7 +986,7 @@ Additionally, there seemed to be a relationship with employment duration and
 estimated return, but the trend seems to be blending of APR bands across all
 employment durations.
 
-# Bivariate & Multivariate Analysis
+## Bivariate & Multivariate Analysis
 
 ### Talk about some of the relationships you observed in this part of the \
 investigation. How did the feature(s) of interest vary with other features in \
@@ -962,47 +1055,24 @@ interest rate. The plot corroborates with the theory behind the relationships.
 ### Plot Two
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, Plot_Two}
-# create a discrete variable to make the plot look nicer
-#
-# loanData$ProsperScore2 <- cut(loanData$ProsperScore,
-#                               breaks = c(seq(0,11,1)),
-#                               labels = as.character(seq(1,11,1)),
-#                               right = TRUE)
-# loanData$ProsperScore2 <- factor(loanData$ProsperScore2,
-#                                  levels = as.character(seq(1,11,1)))
-# 
-# ggplot(data = loanData,
-#        aes(x = EstimatedReturn,
-#            y = BorrowerAPR,
-#            color = ProsperScore2)) +
-#   geom_jitter(alpha = 1/2) +
-#   scale_x_continuous(labels = scales::percent) +
-#   scale_y_continuous(labels = scales::percent) +
-#   facet_grid(Term2~.) +
-#   labs(title = paste('Relationship of estimated return to',
-#                      'interest rate and Prosper score'),
-#        y = 'Borrower\'s Interest Rate [APR]',
-#        x = 'Estimated Return',
-#        color = 'Prosper\nScore') +
-#   scale_colour_brewer(palette = 'Blues',
-#                       guide = guide_legend(override.aes = list(alpha = 1,
-#                                                                size = 2)))
-
-# leaving Prosper score as gradient because discrete shader runs out of colors
-ggplot(data = loanData,
+ggplot(data = subset(loanData,
+                     !is.na(ProsperScore2)),
        aes(x = EstimatedReturn,
            y = BorrowerAPR,
-           color = ProsperScore)) +
-  geom_jitter(alpha = 1/2) +
-  facet_grid(Term2~.) +
+           color = ProsperScore2)) +
+  geom_jitter(alpha = 1/4) +
   scale_x_continuous(labels = scales::percent) +
   scale_y_continuous(labels = scales::percent) +
+  facet_grid(Term2~.) +
   labs(title = paste('Relationship of estimated return to',
                      'interest rate and Prosper score'),
        y = 'Borrower\'s Interest Rate [APR]',
        x = 'Estimated Return',
        color = 'Prosper\nScore') +
-  scale_colour_gradient()
+  scale_colour_brewer(#type = 'div',
+                      palette = 'BrBG',
+                      guide = guide_legend(override.aes = list(alpha = 1,
+                                                               size = 2)))
 ```
 
 ### Description Two
@@ -1042,7 +1112,7 @@ with theory that, all things equal, more cash flow will result in less debt.
 
 ------
 
-# Reflection
+> # **Reflection**
 
 The exploration ended up with different results than I had imagined. There are
 a lot of variables that theoretically influence risk that only had a weak
@@ -1062,7 +1132,20 @@ affect, which should be a direct indicator of the risk of the loan getting paid
 back. Additionally, the widely used credit score did not track well with Prosper
 score, showing only a weak correlation.
 
-# References
+With mixed results of theoretical predictors, exploration of additional
+variables would be needed to sufficienty discover the components of how Prosper
+determines and evaluates risk. Potential angles include examining loan statuses
+and defining good and bad loans, because separating categories like late
+payments (<30 days) versus people not being able to pay may paint a different
+picture than just using "DelinquenciesLast7Years or
+"TradesNeverDelinquent..percentage". Another thing to check into is trends over
+time for risk measures using the closing date of the loan. Also, examination of
+the historical Prosper score with 7 letter scale versus the 1-10 number scale
+might be worth investigating to see if there's a difference in evaluation moving
+forward from the switch, which might influence other things like interest rate.
+
+> # **References**
+
 <BR>
 [RStudio cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)
 <BR>
@@ -1079,3 +1162,7 @@ score, showing only a weak correlation.
 [Tables with htmlTable and some alternatives](https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html)
 <BR>
 [Center Plot title in ggplot2](https://stackoverflow.com/questions/40675778/center-plot-title-in-ggplot2)
+<BR>
+[Useful labeller functions](https://ggplot2.tidyverse.org/reference/labellers.html)
+<BR>
+[Rmarkdown font size and header](https://stackoverflow.com/questions/30446905/rmarkdown-font-size-and-header/30447045)

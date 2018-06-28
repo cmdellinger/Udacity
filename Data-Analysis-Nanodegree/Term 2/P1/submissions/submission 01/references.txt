@@ -1,0 +1,23 @@
+RStudio cheatsheet
+(https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf)
+
+RStudio cheatsheet 2.0
+(https://www.rstudio.com/wp-content/uploads/2016/03/rmarkdown-cheatsheet-2.0.pdf)
+
+StackOverflow: Rotating and spacing axis labels in ggplot2
+(https://stackoverflow.com/questions/1330989/rotating-and-spacing-axis-labels-in-ggplot2?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
+
+Debt to Income Ratio
+(https://www.consumerfinance.gov/ask-cfpb/what-is-a-debt-to-income-ratio-why-is-the-43-debt-to-income-ratio-important-en-1791/)
+
+Remove all of x axis labels in ggplot (duplicate)
+(https://stackoverflow.com/questions/35090883/remove-all-of-x-axis-labels-in-ggplot?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
+
+2 column Section in R Markdown
+(https://stackoverflow.com/questions/31753897/2-column-section-in-r-markdown?utm_medium=organic&utm_source=google_rich_qa&utm_campaign=google_rich_qa)
+
+Tables with htmlTable and some alternatives
+(https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html)
+
+Center Plot title in ggplot2
+(https://stackoverflow.com/questions/40675778/center-plot-title-in-ggplot2)

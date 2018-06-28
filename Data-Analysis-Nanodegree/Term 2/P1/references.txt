@@ -21,3 +21,9 @@ Tables with htmlTable and some alternatives
 
 Center Plot title in ggplot2
 (https://stackoverflow.com/questions/40675778/center-plot-title-in-ggplot2)
+
+Useful labeller functions
+(https://ggplot2.tidyverse.org/reference/labellers.html)
+
+Rmarkdown font size and header
+(https://stackoverflow.com/questions/30446905/rmarkdown-font-size-and-header/30447045)
