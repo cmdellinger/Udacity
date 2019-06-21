@@ -14,6 +14,8 @@ Courses:
     + SQL for Data Analysis
     + Swift for Developers
     
-Nanodegree
-* In-Progress
+    Nanodegree:
+*  Completed
     + Data Analysis
+* In-Progress
+    + Data Engineering
